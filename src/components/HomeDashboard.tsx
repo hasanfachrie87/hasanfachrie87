@@ -49,13 +49,11 @@ interface HomeDashboardProps {
   totalExemplarsCount: number;
   activeBorrowedCount: number;
   categories: string[];
-  onSelectStudent: (memberId: string) => void;
   onBorrowBook: (book: Book) => void;
-  onSwitchToAdmin: () => void;
   onLogout: () => void;
 }
 
-const SCHOOL_LOGO_PATH = '/src/assets/images/school_logo_emblem_1793331547455.jpg';
+const SCHOOL_LOGO_PATH = '/assets/aistudio/LOGO_SMP_d7966259.png';
 
 export const HomeDashboard: React.FC<HomeDashboardProps> = ({
   appName,
@@ -68,9 +66,7 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
   totalExemplarsCount,
   activeBorrowedCount,
   categories,
-  onSelectStudent,
   onBorrowBook,
-  onSwitchToAdmin,
   onLogout,
 }) => {
   const [activeNav, setActiveNav] = useState<FrontNavTab>('beranda');
@@ -186,16 +182,6 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
 
           {/* Right: Notifications & Student Profile Menu */}
           <div className="flex items-center gap-2 sm:gap-3 shrink-0 relative">
-            {/* Quick Admin Panel Switch Button */}
-            <button
-              type="button"
-              onClick={onSwitchToAdmin}
-              className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-900/70 hover:bg-blue-800 text-blue-100 text-xs font-medium border border-blue-700/60 transition-colors cursor-pointer"
-            >
-              <ShieldCheck className="w-3.5 h-3.5 text-amber-300" />
-              Panel Pustakawan
-            </button>
-
             {/* Notification Button */}
             <div className="relative">
               <button
@@ -293,26 +279,6 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
                     </p>
                   </div>
 
-                  <div className="p-3 border-b border-slate-100">
-                    <label className="block text-[11px] font-semibold text-slate-500 mb-1.5">
-                      Ganti Simulasi Akun Siswa / Guru:
-                    </label>
-                    <select
-                      value={currentMember?.id || ''}
-                      onChange={(e) => {
-                        onSelectStudent(e.target.value);
-                        setIsProfileMenuOpen(false);
-                      }}
-                      className="w-full px-2.5 py-1.5 text-xs border border-slate-200 rounded-lg bg-slate-50 text-slate-800 font-medium"
-                    >
-                      {members.map((m) => (
-                        <option key={m.id} value={m.id}>
-                          {m.nama} ({m.kelas_unit})
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
                   <div className="p-2 space-y-1">
                     <button
                       type="button"
@@ -324,17 +290,6 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
                     >
                       <CreditCard className="w-4 h-4 text-blue-700" />
                       Lihat Kartu Anggota Digital
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        onSwitchToAdmin();
-                        setIsProfileMenuOpen(false);
-                      }}
-                      className="w-full px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-100 rounded-lg flex items-center gap-2 cursor-pointer"
-                    >
-                      <ShieldCheck className="w-4 h-4 text-blue-700" />
-                      Buka Panel Admin / Pustakawan
                     </button>
                     <button
                       type="button"

@@ -58,9 +58,11 @@ const STORAGE_KEYS = {
   BOOKS: 'pustakaedu_books_v1',
   MEMBERS: 'pustakaedu_members_v1',
   LOANS: 'pustakaedu_loans_v1',
-  SESSION: 'pustakaedu_session_v1',
-  ADMIN_CONFIG: 'pustakaedu_admin_config_v1',
+  SESSION: 'pustakaedu_session_v2',
+  ADMIN_CONFIG: 'pustakaedu_admin_config_v2',
 };
+
+const GREEN_SCHOOL_LOGO = '/assets/aistudio/LOGO_SMP_d7966259.png';
 
 interface AdminConfig {
   kepalaNama: string;
@@ -76,7 +78,7 @@ const DEFAULT_ADMIN_CONFIG: AdminConfig = {
   kepalaNama: 'Budi Santoso, S.IP.',
   kepalaNip: '198205142009011004',
   jabatan: 'Kepala Perpustakaan Sekolah',
-  namaSekolah: 'SMA Negeri 1 Pustaka Nusantara',
+  namaSekolah: 'SMP IT Insan Madani 8 Kota Tangerang Selatan',
   username: 'admin',
   password: 'admin123',
   finePerDay: FINE_PER_DAY,
@@ -124,21 +126,20 @@ export default function App() {
   const [isAdminSettingsOpen, setIsAdminSettingsOpen] = useState(false);
   const [adminConfigForm, setAdminConfigForm] = useState<AdminConfig>(adminConfig);
 
-  // Auth / Role Session State (Defaults to Home Screen / Student Dashboard view)
+  // Auth / Role Session State (Defaults to Front Login Page)
   const [session, setSession] = useState<SessionData>(() => {
     const saved = localStorage.getItem(STORAGE_KEYS.SESSION);
-    return saved
-      ? JSON.parse(saved)
-      : { role: 'siswa', studentMemberId: 'mb-201' };
+    return saved ? JSON.parse(saved) : { role: null };
   });
 
   // Login Modal / Screen State
-  const [loginRoleTab, setLoginRoleTab] = useState<'admin' | 'siswa'>('admin');
-  const [adminUsername, setAdminUsername] = useState('admin');
-  const [adminPassword, setAdminPassword] = useState('admin123');
+  const [loginRoleTab, setLoginRoleTab] = useState<'siswa' | 'admin'>('siswa');
+  const [adminUsername, setAdminUsername] = useState('');
+  const [adminPassword, setAdminPassword] = useState('');
   const [selectedStudentId, setSelectedStudentId] = useState<string>('mb-201');
   const [nisInput, setNisInput] = useState('20241001');
   const [loginError, setLoginError] = useState('');
+  const [loginLogoError, setLoginLogoError] = useState(false);
 
   // Navigation Tabs
   const [adminTab, setAdminTab] = useState<AdminTab>('ringkasan');
@@ -511,9 +512,7 @@ export default function App() {
         });
         showToast('Selamat datang di Panel Admin Perpustakaan', 'success');
       } else {
-        setLoginError(
-          `Kredensial Admin tidak cocok. Gunakan username: ${adminConfig.username} & sandi: ${adminConfig.password}`
-        );
+        setLoginError('Username atau Kata Sandi Admin tidak valid.');
       }
     } else {
       const foundMember = members.find(
@@ -960,52 +959,70 @@ export default function App() {
     );
   };
 
-  // LOGIN SCREEN IF NO ACTIVE ROLE
+  // LOGIN SCREEN IF NO ACTIVE ROLE (FRONT PAGE)
   if (!session.role) {
     return (
       <div className="min-h-screen bg-sky-100 flex flex-col justify-center items-center p-4">
-        <div className="w-full max-w-md bg-white border border-sky-200 rounded-xl p-8 shadow-xs">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-10 h-10 rounded-lg bg-slate-900 text-white flex items-center justify-center shrink-0">
-              <BookOpen className="w-5 h-5" />
+        <div className="w-full max-w-md bg-white border border-sky-200 rounded-2xl p-8 shadow-sm">
+          {/* Header Brand: Green School Logo + Green PustakaEdu Title */}
+          <div className="flex items-center gap-3.5 mb-6 pb-5 border-b border-slate-100">
+            <div className="w-14 h-14 rounded-2xl bg-emerald-50 border border-emerald-200 p-1 flex items-center justify-center shrink-0 overflow-hidden shadow-2xs">
+              {!loginLogoError ? (
+                <img
+                  src={GREEN_SCHOOL_LOGO}
+                  alt="Logo Sekolah"
+                  referrerPolicy="no-referrer"
+                  onError={() => setLoginLogoError(true)}
+                  className="w-full h-full object-contain rounded-xl"
+                />
+              ) : (
+                <BookOpen className="w-7 h-7 text-emerald-700" />
+              )}
             </div>
             <div>
-              <h1 className="text-xl font-bold text-slate-900 tracking-tight">PustakaEdu</h1>
-              <p className="text-xs text-slate-500">Sistem Informasi Perpustakaan Sekolah</p>
+              <h1 className="text-2xl font-display font-bold text-emerald-700 tracking-tight leading-none">
+                PustakaEdu
+              </h1>
+              <p className="text-xs font-semibold text-emerald-600 mt-1">
+                {adminConfig.namaSekolah}
+              </p>
+              <p className="text-[11px] text-slate-500 mt-0.5">
+                Sistem Informasi Perpustakaan Sekolah
+              </p>
             </div>
           </div>
 
           {/* Role Selector Tabs */}
-          <div className="grid grid-cols-2 gap-1 p-1 bg-slate-100 rounded-lg mb-6">
-            <button
-              type="button"
-              onClick={() => {
-                setLoginRoleTab('admin');
-                setLoginError('');
-              }}
-              className={`py-2 px-3 text-xs font-semibold rounded-md transition-colors flex items-center justify-center gap-2 whitespace-nowrap ${
-                loginRoleTab === 'admin'
-                  ? 'bg-white text-slate-900 shadow-xs'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              <ShieldCheck className="w-4 h-4" />
-              Admin / Pustakawan
-            </button>
+          <div className="grid grid-cols-2 gap-1 p-1 bg-slate-100 rounded-xl mb-6">
             <button
               type="button"
               onClick={() => {
                 setLoginRoleTab('siswa');
                 setLoginError('');
               }}
-              className={`py-2 px-3 text-xs font-semibold rounded-md transition-colors flex items-center justify-center gap-2 whitespace-nowrap ${
+              className={`py-2.5 px-3 text-xs font-semibold rounded-lg transition-colors flex items-center justify-center gap-2 whitespace-nowrap cursor-pointer ${
                 loginRoleTab === 'siswa'
-                  ? 'bg-white text-slate-900 shadow-xs'
+                  ? 'bg-emerald-700 text-white shadow-xs'
                   : 'text-slate-600 hover:text-slate-900'
               }`}
             >
               <GraduationCap className="w-4 h-4" />
-              Portal Siswa / Guru
+              Login Siswa / Guru
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setLoginRoleTab('admin');
+                setLoginError('');
+              }}
+              className={`py-2.5 px-3 text-xs font-semibold rounded-lg transition-colors flex items-center justify-center gap-2 whitespace-nowrap cursor-pointer ${
+                loginRoleTab === 'admin'
+                  ? 'bg-emerald-700 text-white shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <ShieldCheck className="w-4 h-4" />
+              Login Pustakawan
             </button>
           </div>
 
@@ -1021,14 +1038,14 @@ export default function App() {
               <>
                 <div>
                   <label className="block text-xs font-medium text-slate-700 mb-1.5">
-                    Username Pustakawan
+                    Username Pustakawan / Admin
                   </label>
                   <input
                     type="text"
                     value={adminUsername}
                     onChange={(e) => setAdminUsername(e.target.value)}
-                    placeholder="Masukkan username (admin)"
-                    className="w-full px-3.5 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
+                    placeholder="Masukkan username admin"
+                    className="w-full px-3.5 py-2.5 text-sm border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-600"
                     required
                   />
                 </div>
@@ -1040,21 +1057,17 @@ export default function App() {
                     type="password"
                     value={adminPassword}
                     onChange={(e) => setAdminPassword(e.target.value)}
-                    placeholder="Masukkan kata sandi (admin123)"
-                    className="w-full px-3.5 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
+                    placeholder="Masukkan kata sandi admin"
+                    className="w-full px-3.5 py-2.5 text-sm border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-600"
                     required
                   />
-                </div>
-                <div className="p-3 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-600">
-                  <p className="font-medium text-slate-800 mb-1">Akses Demo Pustakawan:</p>
-                  <p className="font-mono">Username: admin · Sandi: admin123</p>
                 </div>
               </>
             ) : (
               <>
                 <div>
                   <label className="block text-xs font-medium text-slate-700 mb-1.5">
-                    Pilih Akun Anggota (Siswa / Guru)
+                    Pilih Nama Anggota (Siswa / Guru)
                   </label>
                   <select
                     value={selectedStudentId}
@@ -1063,7 +1076,7 @@ export default function App() {
                       const found = members.find((m) => m.id === e.target.value);
                       if (found) setNisInput(found.nomor_induk);
                     }}
-                    className="w-full px-3.5 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 bg-white"
+                    className="w-full px-3.5 py-2.5 text-sm border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-600 bg-white"
                   >
                     {members.map((m) => (
                       <option key={m.id} value={m.id}>
@@ -1074,27 +1087,25 @@ export default function App() {
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-slate-700 mb-1.5">
-                    Atau Ketik Nomor Induk (NIS / NIP)
+                    Nomor Induk Siswa / Pegawai (NIS / NIP)
                   </label>
                   <input
                     type="text"
                     value={nisInput}
                     onChange={(e) => setNisInput(e.target.value)}
-                    placeholder="Contoh: 20241001"
-                    className="w-full px-3.5 py-2 text-sm font-mono border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
+                    placeholder="Masukkan NIS atau NIP"
+                    className="w-full px-3.5 py-2.5 text-sm font-mono border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-600"
+                    required
                   />
-                </div>
-                <div className="p-3 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-600">
-                  Siswa dan Guru dapat mencari katalog buku perpustakaan, memeriksa ketersediaan stok, dan memantau riwayat pinjam beserta denda keterlambatan.
                 </div>
               </>
             )}
 
             <button
               type="submit"
-              className="w-full py-2.5 px-4 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg transition-colors cursor-pointer"
+              className="w-full py-2.5 px-4 bg-emerald-700 hover:bg-emerald-800 text-white text-sm font-semibold rounded-xl transition-colors cursor-pointer shadow-xs"
             >
-              Masuk ke Sistem Perpustakaan
+              Masuk ke PustakaEdu
             </button>
           </form>
         </div>
@@ -1102,7 +1113,7 @@ export default function App() {
     );
   }
 
-  // FRONT HOME DASHBOARD (STUDENT / HOME SCREEN MODE)
+  // FRONT HOME DASHBOARD (STUDENT / TEACHER PORTAL — NO ACCESS TO ADMIN PANEL)
   if (session.role === 'siswa') {
     return (
       <>
@@ -1131,11 +1142,7 @@ export default function App() {
           totalExemplarsCount={stats.totalExemplars}
           activeBorrowedCount={stats.activeLoans}
           categories={categories}
-          onSelectStudent={(memberId) =>
-            setSession({ role: 'siswa', studentMemberId: memberId })
-          }
           onBorrowBook={handleStudentBorrow}
-          onSwitchToAdmin={() => handleQuickRoleSwitch('admin')}
           onLogout={() => setSession({ role: null })}
         />
       </>
@@ -1157,17 +1164,21 @@ export default function App() {
 
       {/* TOP BAR CONTRACT: 3 Zones separated by gap-8 */}
       <header className="bg-white border-b border-slate-200 px-6 py-3.5 flex items-center justify-between gap-8 sticky top-0 z-30 no-print">
-        {/* Zone 1: Brand Title, One Line */}
+        {/* Zone 1: Brand Title with School Logo, One Line */}
         <a
           href="#top"
           onClick={(e) => {
             e.preventDefault();
-            if (session.role === 'admin') setAdminTab('ringkasan');
-            else setStudentTab('katalog');
+            setAdminTab('ringkasan');
           }}
-          className="text-lg font-display font-bold tracking-tight text-slate-900 whitespace-nowrap shrink-0"
+          className="flex items-center gap-2.5 text-lg font-display font-bold tracking-tight text-emerald-700 whitespace-nowrap shrink-0"
         >
-          PustakaEdu
+          <img
+            src={GREEN_SCHOOL_LOGO}
+            alt="Logo SMP IT Insan Madani 8"
+            className="w-9 h-9 object-contain shrink-0"
+          />
+          <span>PustakaEdu</span>
         </a>
 
         {/* Zone 2: 4-5 Concise Single-Line Nav Links */}
@@ -1335,31 +1346,6 @@ export default function App() {
                 onChange={(e) => setSimulatedToday(e.target.value)}
                 className="px-2 py-1 text-xs font-mono border border-slate-200 rounded-md bg-slate-50 text-slate-800"
               />
-            </div>
-
-            <div className="flex items-center gap-1 p-0.5 bg-slate-100 rounded-lg border border-slate-200">
-              <button
-                type="button"
-                onClick={() => handleQuickRoleSwitch('admin')}
-                className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors whitespace-nowrap cursor-pointer ${
-                  session.role === 'admin'
-                    ? 'bg-white text-slate-900 shadow-2xs'
-                    : 'text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                Mode Admin
-              </button>
-              <button
-                type="button"
-                onClick={() => handleQuickRoleSwitch('siswa')}
-                className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors whitespace-nowrap cursor-pointer ${
-                  session.role === 'siswa'
-                    ? 'bg-white text-slate-900 shadow-2xs'
-                    : 'text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                Mode Siswa
-              </button>
             </div>
           </div>
         </div>
@@ -2973,17 +2959,24 @@ export default function App() {
             {/* Printable Official School Library Report Sheet */}
             <div className="space-y-6 text-slate-900">
               {/* Official School Header */}
-              <div className="border-b-2 border-slate-900 pb-4 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-                <div>
-                  <p className="text-xs font-semibold tracking-wider text-slate-500 uppercase">
-                    {adminConfig.namaSekolah}
-                  </p>
-                  <h1 className="text-xl font-display font-bold text-slate-900 mt-0.5">
-                    LAPORAN REKAPITULASI PEMINJAMAN BUKU BULANAN
-                  </h1>
-                  <p className="text-xs text-slate-600 mt-1">
-                    Periode Bulan: <span className="font-semibold text-slate-900">{formatMonthLabel(reportMonth)}</span>
-                  </p>
+              <div className="border-b-2 border-slate-900 pb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex items-center gap-3.5">
+                  <img
+                    src={GREEN_SCHOOL_LOGO}
+                    alt="Logo Sekolah"
+                    className="w-14 h-14 object-contain shrink-0"
+                  />
+                  <div>
+                    <p className="text-xs font-semibold tracking-wider text-emerald-800 uppercase">
+                      {adminConfig.namaSekolah}
+                    </p>
+                    <h1 className="text-xl font-display font-bold text-slate-900 mt-0.5">
+                      LAPORAN REKAPITULASI PEMINJAMAN BUKU BULANAN
+                    </h1>
+                    <p className="text-xs text-slate-600 mt-1">
+                      Periode Bulan: <span className="font-semibold text-slate-900">{formatMonthLabel(reportMonth)}</span>
+                    </p>
+                  </div>
                 </div>
                 <div className="text-xs font-mono text-slate-600 sm:text-right">
                   <p>Tanggal Cetak: {formatDateId(new Date().toISOString().split('T')[0])}</p>
