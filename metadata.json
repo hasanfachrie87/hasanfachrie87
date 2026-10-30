@@ -1,0 +1,6 @@
+{
+  "name": "PustakaEdu — Sistem Informasi Perpustakaan Sekolah",
+  "description": "Sistem informasi perpustakaan sekolah berbasis web lengkap dengan manajemen buku, anggota, transaksi peminjaman & pengembalian, perhitungan denda otomatis, serta hak akses Admin dan Siswa terintegrasi Supabase.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
