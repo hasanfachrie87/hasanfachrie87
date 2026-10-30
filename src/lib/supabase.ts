@@ -20,6 +20,7 @@ export interface Book {
   stok_total: number;
   stok_tersedia: number;
   cover_url: string;
+  rating?: number;
   created_at?: string;
 }
 
@@ -112,7 +113,8 @@ export const INITIAL_BOOKS: Book[] = [
     isbn: '978-979-97312-3-4',
     stok_total: 8,
     stok_tersedia: 6,
-    cover_url: '',
+    cover_url: '/src/assets/images/cover_bumi_manusia_1793331549425.jpg',
+    rating: 4.9,
   },
   {
     id: 'bk-102',
@@ -124,7 +126,8 @@ export const INITIAL_BOOKS: Book[] = [
     isbn: '978-602-298-712-3',
     stok_total: 12,
     stok_tersedia: 11,
-    cover_url: '',
+    cover_url: '/src/assets/images/cover_fisika_dasar_1793331551410.jpg',
+    rating: 4.8,
   },
   {
     id: 'bk-103',
@@ -136,7 +139,21 @@ export const INITIAL_BOOKS: Book[] = [
     isbn: '978-623-7131-44-1',
     stok_total: 10,
     stok_tersedia: 9,
-    cover_url: '',
+    cover_url: '/src/assets/images/cover_algoritma_pemrograman_1793331551544.jpg',
+    rating: 4.9,
+  },
+  {
+    id: 'bk-105',
+    judul: 'Laskar Pelangi',
+    penulis: 'Andrea Hirata',
+    penerbit: 'Bentang Pustaka',
+    tahun_terbit: 2008,
+    kategori: 'Sastra & Fiksi',
+    isbn: '978-979-3062-79-2',
+    stok_total: 9,
+    stok_tersedia: 8,
+    cover_url: '/src/assets/images/cover_laskar_pelangi_1793331552838.jpg',
+    rating: 4.8,
   },
   {
     id: 'bk-104',
@@ -149,18 +166,7 @@ export const INITIAL_BOOKS: Book[] = [
     stok_total: 6,
     stok_tersedia: 6,
     cover_url: '',
-  },
-  {
-    id: 'bk-105',
-    judul: 'Laskar Pelangi',
-    penulis: 'Andrea Hirata',
-    penerbit: 'Bentang Pustaka',
-    tahun_terbit: 2008,
-    kategori: 'Sastra & Fiksi',
-    isbn: '978-979-3062-79-2',
-    stok_total: 9,
-    stok_tersedia: 8,
-    cover_url: '',
+    rating: 4.7,
   },
   {
     id: 'bk-106',
@@ -173,6 +179,7 @@ export const INITIAL_BOOKS: Book[] = [
     stok_total: 7,
     stok_tersedia: 7,
     cover_url: '',
+    rating: 4.9,
   },
   {
     id: 'bk-107',
@@ -185,6 +192,7 @@ export const INITIAL_BOOKS: Book[] = [
     stok_total: 5,
     stok_tersedia: 5,
     cover_url: '',
+    rating: 4.6,
   },
 ];
 

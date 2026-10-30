@@ -48,6 +48,7 @@ import {
   SUPABASE_SQL_SCHEMA,
 } from './lib/supabase';
 import { BookCover } from './components/BookCover';
+import { HomeDashboard } from './components/HomeDashboard';
 
 type UserRole = 'admin' | 'siswa' | null;
 type AdminTab = 'ringkasan' | 'buku' | 'anggota' | 'transaksi' | 'supabase';
@@ -88,10 +89,21 @@ interface SessionData {
 }
 
 export default function App() {
-  // Data States
+  // Data States (Ensure generated cover images & ratings on default seed books are applied)
   const [books, setBooks] = useState<Book[]>(() => {
     const saved = localStorage.getItem(STORAGE_KEYS.BOOKS);
-    return saved ? JSON.parse(saved) : INITIAL_BOOKS;
+    if (saved) {
+      const parsed: Book[] = JSON.parse(saved);
+      return parsed.map((b) => {
+        const seedMatch = INITIAL_BOOKS.find((ib) => ib.id === b.id);
+        return {
+          ...b,
+          cover_url: b.cover_url || seedMatch?.cover_url || '',
+          rating: b.rating || seedMatch?.rating || 4.8,
+        };
+      });
+    }
+    return INITIAL_BOOKS;
   });
 
   const [members, setMembers] = useState<Member[]>(() => {
@@ -112,12 +124,12 @@ export default function App() {
   const [isAdminSettingsOpen, setIsAdminSettingsOpen] = useState(false);
   const [adminConfigForm, setAdminConfigForm] = useState<AdminConfig>(adminConfig);
 
-  // Auth / Role Session State
+  // Auth / Role Session State (Defaults to Home Screen / Student Dashboard view)
   const [session, setSession] = useState<SessionData>(() => {
     const saved = localStorage.getItem(STORAGE_KEYS.SESSION);
     return saved
       ? JSON.parse(saved)
-      : { role: 'admin', adminName: 'Budi Santoso, S.IP. (Kepala Pustakawan)' };
+      : { role: 'siswa', studentMemberId: 'mb-201' };
   });
 
   // Login Modal / Screen State
@@ -1090,7 +1102,47 @@ export default function App() {
     );
   }
 
-  // MAIN WORKSPACE
+  // FRONT HOME DASHBOARD (STUDENT / HOME SCREEN MODE)
+  if (session.role === 'siswa') {
+    return (
+      <>
+        {toast && (
+          <div className="fixed top-20 right-5 z-50 max-w-md bg-[#0F2557] text-white px-4 py-3 rounded-xl shadow-lg border border-blue-800 flex items-center gap-3 text-xs font-medium no-print">
+            {toast.type === 'success' && (
+              <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+            )}
+            {toast.type === 'warning' && (
+              <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
+            )}
+            {toast.type === 'error' && (
+              <AlertTriangle className="w-4 h-4 text-red-400 shrink-0" />
+            )}
+            <span>{toast.text}</span>
+          </div>
+        )}
+        <HomeDashboard
+          appName="PustakaEdu"
+          schoolName={adminConfig.namaSekolah}
+          books={books}
+          members={members}
+          activeStudent={activeStudent}
+          studentLoans={studentLoans}
+          totalBooksCount={stats.totalTitles}
+          totalExemplarsCount={stats.totalExemplars}
+          activeBorrowedCount={stats.activeLoans}
+          categories={categories}
+          onSelectStudent={(memberId) =>
+            setSession({ role: 'siswa', studentMemberId: memberId })
+          }
+          onBorrowBook={handleStudentBorrow}
+          onSwitchToAdmin={() => handleQuickRoleSwitch('admin')}
+          onLogout={() => setSession({ role: null })}
+        />
+      </>
+    );
+  }
+
+  // MAIN WORKSPACE (ADMIN / PUSTAKAWAN PANEL)
   return (
     <div className="min-h-screen bg-sky-100/80 text-slate-900 flex flex-col">
       {/* Toast Alert */}
