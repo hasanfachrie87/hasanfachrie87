@@ -951,8 +951,8 @@ export default function App() {
   // LOGIN SCREEN IF NO ACTIVE ROLE
   if (!session.role) {
     return (
-      <div className="min-h-screen bg-slate-50 flex flex-col justify-center items-center p-4">
-        <div className="w-full max-w-md bg-white border border-slate-200 rounded-xl p-8">
+      <div className="min-h-screen bg-sky-100 flex flex-col justify-center items-center p-4">
+        <div className="w-full max-w-md bg-white border border-sky-200 rounded-xl p-8 shadow-xs">
           <div className="flex items-center gap-3 mb-6">
             <div className="w-10 h-10 rounded-lg bg-slate-900 text-white flex items-center justify-center shrink-0">
               <BookOpen className="w-5 h-5" />
@@ -1092,7 +1092,7 @@ export default function App() {
 
   // MAIN WORKSPACE
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col">
+    <div className="min-h-screen bg-sky-100/80 text-slate-900 flex flex-col">
       {/* Toast Alert */}
       {toast && (
         <div className="fixed bottom-5 right-5 z-50 max-w-md bg-slate-900 text-white px-4 py-3 rounded-lg shadow-lg border border-slate-700 flex items-center gap-3 text-xs font-medium no-print">
