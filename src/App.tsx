@@ -1385,7 +1385,7 @@ export default function App() {
                       className="px-4 py-2 bg-white hover:bg-slate-50 text-slate-800 border border-slate-200 text-xs font-semibold rounded-lg transition-colors flex items-center gap-2 whitespace-nowrap cursor-pointer"
                     >
                       <Printer className="w-4 h-4 text-slate-700" />
-                      Print Peminjaman 1 Bulan
+                      Print
                     </button>
                     <button
                       type="button"
@@ -1869,7 +1869,7 @@ export default function App() {
                       className="px-4 py-2.5 bg-white hover:bg-slate-50 text-slate-800 border border-slate-200 text-xs font-semibold rounded-lg transition-colors flex items-center gap-2 whitespace-nowrap cursor-pointer"
                     >
                       <Printer className="w-4 h-4 text-slate-700" />
-                      Print Data Peminjaman 1 Bulan
+                      Print
                     </button>
                     <button
                       type="button"
