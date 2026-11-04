@@ -110,7 +110,21 @@ export default function App() {
 
   const [members, setMembers] = useState<Member[]>(() => {
     const saved = localStorage.getItem(STORAGE_KEYS.MEMBERS);
-    return saved ? JSON.parse(saved) : INITIAL_MEMBERS;
+    if (saved) {
+      const parsed: Member[] = JSON.parse(saved);
+      return parsed.map((m) => {
+        const seedMatch = INITIAL_MEMBERS.find((im) => im.id === m.id);
+        const fallbackUsername =
+          m.username ||
+          seedMatch?.username ||
+          m.nama.trim().split(/\s+/)[0].toLowerCase().replace(/[^a-z0-9]/g, '');
+        return {
+          ...m,
+          username: fallbackUsername,
+        };
+      });
+    }
+    return INITIAL_MEMBERS;
   });
 
   const [loans, setLoans] = useState<LoanTransaction[]>(() => {
@@ -133,11 +147,13 @@ export default function App() {
   });
 
   // Login Modal / Screen State
-  const [loginRoleTab, setLoginRoleTab] = useState<'siswa' | 'admin'>('siswa');
+  const [loginRoleTab, setLoginRoleTab] = useState<'siswa' | 'guru' | 'admin'>('siswa');
   const [adminUsername, setAdminUsername] = useState('');
   const [adminPassword, setAdminPassword] = useState('');
-  const [selectedStudentId, setSelectedStudentId] = useState<string>('mb-201');
-  const [nisInput, setNisInput] = useState('20241001');
+  const [studentUsername, setStudentUsername] = useState('');
+  const [nisInput, setNisInput] = useState('');
+  const [teacherUsername, setTeacherUsername] = useState('');
+  const [nipInput, setNipInput] = useState('');
   const [loginError, setLoginError] = useState('');
   const [loginLogoError, setLoginLogoError] = useState(false);
 
@@ -183,6 +199,7 @@ export default function App() {
   const [editingMember, setEditingMember] = useState<Member | null>(null);
   const [memberForm, setMemberForm] = useState({
     nomor_induk: '',
+    username: '',
     nama: '',
     tipe: 'Siswa' as 'Siswa' | 'Guru',
     kelas_unit: '',
@@ -400,6 +417,7 @@ export default function App() {
       const matchesQuery =
         !q ||
         m.nama.toLowerCase().includes(q) ||
+        (m.username || '').toLowerCase().includes(q) ||
         m.nomor_induk.toLowerCase().includes(q) ||
         m.kelas_unit.toLowerCase().includes(q) ||
         m.telepon.toLowerCase().includes(q);
@@ -514,18 +532,47 @@ export default function App() {
       } else {
         setLoginError('Username atau Kata Sandi Admin tidak valid.');
       }
-    } else {
-      const foundMember = members.find(
-        (m) => m.id === selectedStudentId || m.nomor_induk.trim() === nisInput.trim()
+    } else if (loginRoleTab === 'siswa') {
+      const cleanUser = studentUsername.trim().toLowerCase();
+      const cleanNis = nisInput.trim();
+      const foundStudent = members.find(
+        (m) =>
+          m.tipe === 'Siswa' &&
+          m.nomor_induk.trim() === cleanNis &&
+          (m.username.trim().toLowerCase() === cleanUser ||
+            m.nama.trim().toLowerCase() === cleanUser)
       );
-      if (foundMember) {
+      if (foundStudent) {
         setSession({
           role: 'siswa',
-          studentMemberId: foundMember.id,
+          studentMemberId: foundStudent.id,
         });
-        showToast(`Selamat datang, ${foundMember.nama}!`, 'success');
+        showToast(`Selamat datang, ${foundStudent.nama}!`, 'success');
       } else {
-        setLoginError('Nomor Induk Siswa/Guru (NIS/NIP) tidak ditemukan dalam database anggota.');
+        setLoginError(
+          'Username atau NIS Siswa tidak sesuai. Pastikan Username dan NIS terdaftar sebagai Siswa.'
+        );
+      }
+    } else {
+      const cleanUser = teacherUsername.trim().toLowerCase();
+      const cleanNip = nipInput.trim();
+      const foundTeacher = members.find(
+        (m) =>
+          m.tipe === 'Guru' &&
+          m.nomor_induk.trim() === cleanNip &&
+          (m.username.trim().toLowerCase() === cleanUser ||
+            m.nama.trim().toLowerCase() === cleanUser)
+      );
+      if (foundTeacher) {
+        setSession({
+          role: 'siswa',
+          studentMemberId: foundTeacher.id,
+        });
+        showToast(`Selamat datang, ${foundTeacher.nama}!`, 'success');
+      } else {
+        setLoginError(
+          'Username atau NIP/NUPTK Guru tidak sesuai. Pastikan Username dan NIP/NUPTK terdaftar sebagai Guru.'
+        );
       }
     }
   };
@@ -695,9 +742,10 @@ export default function App() {
     setEditingMember(null);
     setMemberForm({
       nomor_induk: `2024${Math.floor(1000 + Math.random() * 8999)}`,
+      username: '',
       nama: '',
       tipe: 'Siswa',
-      kelas_unit: 'XI MIPA 1',
+      kelas_unit: 'IX-A',
       telepon: '0812-',
     });
     setIsMemberModalOpen(true);
@@ -707,6 +755,7 @@ export default function App() {
     setEditingMember(member);
     setMemberForm({
       nomor_induk: member.nomor_induk,
+      username: member.username || '',
       nama: member.nama,
       tipe: member.tipe,
       kelas_unit: member.kelas_unit,
@@ -717,8 +766,8 @@ export default function App() {
 
   const handleSaveMember = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!memberForm.nomor_induk.trim() || !memberForm.nama.trim()) {
-      showToast('NIS/NIP dan Nama Lengkap wajib diisi', 'warning');
+    if (!memberForm.nomor_induk.trim() || !memberForm.nama.trim() || !memberForm.username.trim()) {
+      showToast('Username, NIS/NIP/NUPTK, dan Nama Lengkap wajib diisi', 'warning');
       return;
     }
 
@@ -726,6 +775,7 @@ export default function App() {
       const updated: Member = {
         ...editingMember,
         nomor_induk: memberForm.nomor_induk.trim(),
+        username: memberForm.username.trim().toLowerCase(),
         nama: memberForm.nama.trim(),
         tipe: memberForm.tipe,
         kelas_unit: memberForm.kelas_unit.trim(),
@@ -739,16 +789,17 @@ export default function App() {
         (m) => m.nomor_induk.toLowerCase() === memberForm.nomor_induk.trim().toLowerCase()
       );
       if (duplicate) {
-        showToast('Nomor Induk (NIS/NIP) sudah terdaftar pada anggota lain.', 'error');
+        showToast('Nomor Induk (NIS / NIP / NUPTK) sudah terdaftar pada anggota lain.', 'error');
         return;
       }
 
       const newMember: Member = {
         id: `mb-${Date.now().toString().slice(-5)}`,
         nomor_induk: memberForm.nomor_induk.trim(),
+        username: memberForm.username.trim().toLowerCase(),
         nama: memberForm.nama.trim(),
         tipe: memberForm.tipe,
-        kelas_unit: memberForm.kelas_unit.trim() || 'X Merdeka 1',
+        kelas_unit: memberForm.kelas_unit.trim() || 'VII-A',
         telepon: memberForm.telepon.trim() || '-',
       };
       setMembers((prev) => [newMember, ...prev]);
@@ -992,22 +1043,37 @@ export default function App() {
             </div>
           </div>
 
-          {/* Role Selector Tabs */}
-          <div className="grid grid-cols-2 gap-1 p-1 bg-slate-100 rounded-xl mb-6">
+          {/* Role Selector Tabs: Siswa, Guru, Pustakawan */}
+          <div className="grid grid-cols-3 gap-1 p-1 bg-slate-100 rounded-xl mb-6">
             <button
               type="button"
               onClick={() => {
                 setLoginRoleTab('siswa');
                 setLoginError('');
               }}
-              className={`py-2.5 px-3 text-xs font-semibold rounded-lg transition-colors flex items-center justify-center gap-2 whitespace-nowrap cursor-pointer ${
+              className={`py-2.5 px-2 text-xs font-semibold rounded-lg transition-colors flex items-center justify-center gap-1.5 whitespace-nowrap cursor-pointer ${
                 loginRoleTab === 'siswa'
                   ? 'bg-emerald-700 text-white shadow-xs'
                   : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              <GraduationCap className="w-4 h-4" />
-              Login Siswa / Guru
+              <GraduationCap className="w-3.5 h-3.5 shrink-0" />
+              Siswa
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setLoginRoleTab('guru');
+                setLoginError('');
+              }}
+              className={`py-2.5 px-2 text-xs font-semibold rounded-lg transition-colors flex items-center justify-center gap-1.5 whitespace-nowrap cursor-pointer ${
+                loginRoleTab === 'guru'
+                  ? 'bg-emerald-700 text-white shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <UserCheck className="w-3.5 h-3.5 shrink-0" />
+              Guru
             </button>
             <button
               type="button"
@@ -1015,14 +1081,14 @@ export default function App() {
                 setLoginRoleTab('admin');
                 setLoginError('');
               }}
-              className={`py-2.5 px-3 text-xs font-semibold rounded-lg transition-colors flex items-center justify-center gap-2 whitespace-nowrap cursor-pointer ${
+              className={`py-2.5 px-2 text-xs font-semibold rounded-lg transition-colors flex items-center justify-center gap-1.5 whitespace-nowrap cursor-pointer ${
                 loginRoleTab === 'admin'
                   ? 'bg-emerald-700 text-white shadow-xs'
                   : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              <ShieldCheck className="w-4 h-4" />
-              Login Pustakawan
+              <ShieldCheck className="w-3.5 h-3.5 shrink-0" />
+              Pustakawan
             </button>
           </div>
 
@@ -1034,7 +1100,69 @@ export default function App() {
           )}
 
           <form onSubmit={handleLoginSubmit} className="space-y-4">
-            {loginRoleTab === 'admin' ? (
+            {loginRoleTab === 'siswa' && (
+              <>
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 mb-1.5">
+                    Username Siswa
+                  </label>
+                  <input
+                    type="text"
+                    value={studentUsername}
+                    onChange={(e) => setStudentUsername(e.target.value)}
+                    placeholder="Masukkan username siswa"
+                    className="w-full px-3.5 py-2.5 text-sm border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-600"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 mb-1.5">
+                    Nomor Induk Siswa (NIS)
+                  </label>
+                  <input
+                    type="text"
+                    value={nisInput}
+                    onChange={(e) => setNisInput(e.target.value)}
+                    placeholder="Masukkan NIS"
+                    className="w-full px-3.5 py-2.5 text-sm font-mono border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-600"
+                    required
+                  />
+                </div>
+              </>
+            )}
+
+            {loginRoleTab === 'guru' && (
+              <>
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 mb-1.5">
+                    Username Guru
+                  </label>
+                  <input
+                    type="text"
+                    value={teacherUsername}
+                    onChange={(e) => setTeacherUsername(e.target.value)}
+                    placeholder="Masukkan username guru"
+                    className="w-full px-3.5 py-2.5 text-sm border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-600"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 mb-1.5">
+                    NIP / NUPTK
+                  </label>
+                  <input
+                    type="text"
+                    value={nipInput}
+                    onChange={(e) => setNipInput(e.target.value)}
+                    placeholder="Masukkan NIP atau NUPTK"
+                    className="w-full px-3.5 py-2.5 text-sm font-mono border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-600"
+                    required
+                  />
+                </div>
+              </>
+            )}
+
+            {loginRoleTab === 'admin' && (
               <>
                 <div>
                   <label className="block text-xs font-medium text-slate-700 mb-1.5">
@@ -1059,42 +1187,6 @@ export default function App() {
                     onChange={(e) => setAdminPassword(e.target.value)}
                     placeholder="Masukkan kata sandi admin"
                     className="w-full px-3.5 py-2.5 text-sm border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-600"
-                    required
-                  />
-                </div>
-              </>
-            ) : (
-              <>
-                <div>
-                  <label className="block text-xs font-medium text-slate-700 mb-1.5">
-                    Pilih Nama Anggota (Siswa / Guru)
-                  </label>
-                  <select
-                    value={selectedStudentId}
-                    onChange={(e) => {
-                      setSelectedStudentId(e.target.value);
-                      const found = members.find((m) => m.id === e.target.value);
-                      if (found) setNisInput(found.nomor_induk);
-                    }}
-                    className="w-full px-3.5 py-2.5 text-sm border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-600 bg-white"
-                  >
-                    {members.map((m) => (
-                      <option key={m.id} value={m.id}>
-                        {m.nomor_induk} — {m.nama} ({m.kelas_unit})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-slate-700 mb-1.5">
-                    Nomor Induk Siswa / Pegawai (NIS / NIP)
-                  </label>
-                  <input
-                    type="text"
-                    value={nisInput}
-                    onChange={(e) => setNisInput(e.target.value)}
-                    placeholder="Masukkan NIS atau NIP"
-                    className="w-full px-3.5 py-2.5 text-sm font-mono border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-600"
                     required
                   />
                 </div>
@@ -1773,7 +1865,8 @@ export default function App() {
                     <table className="w-full text-left border-collapse">
                       <thead>
                         <tr className="border-b border-slate-200 bg-slate-50/70 text-[11px] font-semibold text-slate-500">
-                          <th className="py-3.5 px-4">NIS / NIP</th>
+                          <th className="py-3.5 px-4">NIS / NIP / NUPTK</th>
+                          <th className="py-3.5 px-4">Username Login</th>
                           <th className="py-3.5 px-4">Nama Lengkap Anggota</th>
                           <th className="py-3.5 px-4">Status · Kelas / Unit</th>
                           <th className="py-3.5 px-4">No. Telepon</th>
@@ -1784,7 +1877,7 @@ export default function App() {
                       <tbody className="divide-y divide-slate-200 text-sm">
                         {filteredMembers.length === 0 ? (
                           <tr>
-                            <td colSpan={6} className="py-12 text-center text-slate-500">
+                            <td colSpan={7} className="py-12 text-center text-slate-500">
                               Tidak ditemukan anggota yang cocok dengan pencarian.
                             </td>
                           </tr>
@@ -1797,6 +1890,9 @@ export default function App() {
                               <tr key={member.id} className="hover:bg-slate-50/80 transition-colors">
                                 <td className="py-3.5 px-4 font-mono text-xs font-semibold text-slate-900 tabular-nums">
                                   {member.nomor_induk}
+                                </td>
+                                <td className="py-3.5 px-4 font-mono text-xs text-emerald-700 font-semibold">
+                                  {member.username}
                                 </td>
                                 <td className="py-3.5 px-4">
                                   <p className="font-semibold text-slate-900">{member.nama}</p>
@@ -2593,13 +2689,31 @@ export default function App() {
 
               <div>
                 <label className="block text-xs font-medium text-slate-700 mb-1">
-                  {memberForm.tipe === 'Siswa' ? 'Nomor Induk Siswa (NIS) *' : 'Nomor Induk Pegawai (NIP) *'}
+                  Username Login {memberForm.tipe} *
+                </label>
+                <input
+                  type="text"
+                  value={memberForm.username}
+                  onChange={(e) => setMemberForm({ ...memberForm, username: e.target.value })}
+                  placeholder={memberForm.tipe === 'Siswa' ? 'Contoh: nadia' : 'Contoh: hendra'}
+                  className="w-full px-3.5 py-2 text-sm font-mono border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-slate-700 mb-1">
+                  {memberForm.tipe === 'Siswa'
+                    ? 'Nomor Induk Siswa (NIS) *'
+                    : 'NIP / NUPTK Guru *'}
                 </label>
                 <input
                   type="text"
                   value={memberForm.nomor_induk}
                   onChange={(e) => setMemberForm({ ...memberForm, nomor_induk: e.target.value })}
-                  placeholder={memberForm.tipe === 'Siswa' ? 'Contoh: 20241005' : 'Contoh: 19880312201501'}
+                  placeholder={
+                    memberForm.tipe === 'Siswa' ? 'Contoh: 20241005' : 'Contoh: 19880312201501'
+                  }
                   className="w-full px-3.5 py-2 text-sm font-mono border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
                   required
                 />

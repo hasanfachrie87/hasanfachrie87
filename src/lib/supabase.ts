@@ -26,7 +26,8 @@ export interface Book {
 
 export interface Member {
   id: string;
-  nomor_induk: string; // NIS atau NIP
+  nomor_induk: string; // NIS (Siswa) atau NIP/NUPTK (Guru)
+  username: string; // Username login Siswa / Guru
   nama: string;
   tipe: 'Siswa' | 'Guru';
   kelas_unit: string;
@@ -200,38 +201,43 @@ export const INITIAL_MEMBERS: Member[] = [
   {
     id: 'mb-201',
     nomor_induk: '20241001',
+    username: 'nadia',
     nama: 'Nadia Putri Maharani',
     tipe: 'Siswa',
-    kelas_unit: 'XII MIPA 1',
+    kelas_unit: 'IX-A',
     telepon: '0812-3456-7890',
   },
   {
     id: 'mb-202',
     nomor_induk: '20241002',
+    username: 'rizky',
     nama: 'Rizky Pratama Wijaya',
     tipe: 'Siswa',
-    kelas_unit: 'XI IPS 2',
+    kelas_unit: 'VIII-B',
     telepon: '0813-9876-5432',
   },
   {
     id: 'mb-203',
     nomor_induk: '20241003',
+    username: 'aulia',
     nama: 'Aulia Rahman Hakim',
     tipe: 'Siswa',
-    kelas_unit: 'X Merdeka 3',
+    kelas_unit: 'VII-C',
     telepon: '0857-2345-6789',
   },
   {
     id: 'mb-204',
     nomor_induk: '19850412201001',
+    username: 'hendra',
     nama: 'Drs. Hendra Kusuma, M.Pd.',
     tipe: 'Guru',
-    kelas_unit: 'Guru Fisika & Sains',
+    kelas_unit: 'Guru IPA & Sains',
     telepon: '0811-2233-4455',
   },
   {
     id: 'mb-205',
     nomor_induk: '19910823201502',
+    username: 'siti',
     nama: 'Siti Aminah, S.Kom.',
     tipe: 'Guru',
     kelas_unit: 'Guru Informatika',
@@ -324,6 +330,7 @@ CREATE TABLE IF NOT EXISTS public.books (
 CREATE TABLE IF NOT EXISTS public.members (
   id TEXT PRIMARY KEY,
   nomor_induk TEXT NOT NULL UNIQUE,
+  username TEXT NOT NULL,
   nama TEXT NOT NULL,
   tipe TEXT NOT NULL CHECK (tipe IN ('Siswa', 'Guru')),
   kelas_unit TEXT NOT NULL,
